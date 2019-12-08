@@ -57,27 +57,22 @@
    :index1 (.indexOf wire1 p)
    :index2 (.indexOf wire2 p)})
 
-(defn closest-intersection [wire1 wire2]
+(defn best-intersection [wire1 wire2 f]
   (let [path1 (compute-path wire1)
         path2 (compute-path wire2)
         intersections (filter #(not= origin %) (set/intersection (set path1) (set path2)))]
-    (first (sort #(compare (%1 :manhattan) (%2 :manhattan))
-          (map (fn [e] (compute-details e path1 path2)) intersections)))))
+    (first (sort f (map (fn [e] (compute-details e path1 path2)) intersections)))))
 
-
-(defn shortest-intersection [wire1 wire2]
-  (let [path1 (compute-path wire1)
-        path2 (compute-path wire2)
-        intersections (filter #(not= origin %) (set/intersection (set path1) (set path2)))]
-    (first (sort #(compare (+ (%1 :index1) (%1 :index2)) (+ (%2 :index1) (%2 :index2)))
-          (map (fn [e] (compute-details e path1 path2)) intersections)))))
+(def compare-manhattan-fn #(compare (%1 :manhattan) (%2 :manhattan)))
+(def compare-steps-fn #(compare (+ (%1 :index1) (%1 :index2))
+                                (+ (%2 :index1) (%2 :index2))))
 
 (defn solve-part1 []
   (let [content (str/trim (slurp "resources/manhattan.txt"))
         lines (str/split content #"\n")
         wire1 (nth lines 0)
         wire2 (nth lines 1)
-        result (closest-intersection wire1 wire2)]
+        result (best-intersection wire1 wire2 compare-manhattan-fn)]
     (result :manhattan)))
 
 (defn solve-part2 []
@@ -85,5 +80,5 @@
         lines (str/split content #"\n")
         wire1 (nth lines 0)
         wire2 (nth lines 1)
-        result (shortest-intersection wire1 wire2)]
+        result (best-intersection wire1 wire2 compare-steps-fn)]
     (+ (result :index1) (result :index2))))
