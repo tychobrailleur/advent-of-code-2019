@@ -1,13 +1,8 @@
 (ns advent-of-code.day2
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [advent-of-code.util :as util]))
 
 (def code (str/trim (slurp "resources/intcode.txt")))
-
-(defn replace-nth
-  "Returns a new list based on `l` where value at index `i` is replaced with `new-val`"
-  [l i new-val]
-  (let [v (into [] l)]
-    (flatten (list (conj (subvec v 0 i) new-val) (subvec v (+ i 1))))))
 
 (declare do-op)
 
@@ -26,20 +21,21 @@
   (let [first-op (nth codes (nth codes (+ 1 index)))
         second-op (nth codes (nth codes (+ 2 index)))
         result (op first-op second-op)]
-    (process-code (replace-nth codes (nth codes (+ 3 index)) result) (+ 4 index))))
+    (process-code (util/replace-nth codes (nth codes (+ 3 index)) result) (+ 4 index))))
 
 (defn process [sv noun verb]
   (let [s (into [] (map #(Integer/parseInt %) (str/split sv  #",")))
-        c1 (replace-nth s 1 noun)
-        c2 (replace-nth c1 2 verb)]
+        c1 (util/replace-nth s 1 noun)
+        c2 (util/replace-nth c1 2 verb)]
     (process-code c2)))
-
-(process code 12 2)
 
 (defn print-result [noun verb]
   (println noun verb (+ (* 100 noun) verb)))
 
-(defn find-value []
+(defn solve-part1 []
+  (process code 12 2))
+
+(defn solve-part2 []
   (for [verb (range 99)
         noun (range 99)
         :let [output (first (process code noun verb))]
