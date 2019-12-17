@@ -1,5 +1,5 @@
 (ns advent-of-code.day5-test
-  (:require [advent-of-code.day5 :as sut]
+  (:require [advent-of-code.intcode :as sut]
             [clojure.test :refer :all]))
 
 (deftest opcode-parser-four-digits

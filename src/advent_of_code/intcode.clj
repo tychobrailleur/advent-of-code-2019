@@ -67,11 +67,14 @@
        codes)))
   ([codes] (process-code codes 0)))
 
+(defn- store-and-process [codes index value]
+  (process-code (util/replace-nth codes (nth codes (+ 3 index)) value) (+ 4 index)))
+
 (defn do-algebraic-op [op codes index instr]
   (let [first-op (arg-value codes index 1 instr)
         second-op (arg-value codes index 2 instr)
         result (op first-op second-op)]
-    (process-code (util/replace-nth codes (nth codes (+ 3 index)) result) (+ 4 index))))
+    (store-and-process codes index result)))
 
 (defn do-store-input [codes index _instr]
   (let [input (Integer/parseInt (str/trim (read-line)))
@@ -95,13 +98,13 @@
 
 (defn do-less-than [codes index instr]
   (if (< (arg-value codes index 1 instr) (arg-value codes index 2 instr))
-    (process-code (util/replace-nth codes (nth codes (+ 3 index)) 1) (+ 4 index))
-    (process-code (util/replace-nth codes (nth codes (+ 3 index)) 0) (+ 4 index))))
+    (store-and-process codes index 1)
+    (store-and-process codes index 0)))
 
 (defn do-equal [codes index instr]
   (if (= (arg-value codes index 1 instr) (arg-value codes index 2 instr))
-    (process-code (util/replace-nth codes (nth codes (+ 3 index)) 1) (+ 4 index))
-    (process-code (util/replace-nth codes (nth codes (+ 3 index)) 0) (+ 4 index))))
+    (store-and-process codes index 1)
+    (store-and-process codes index 0)))
 
 (defn process
   ([sv]
