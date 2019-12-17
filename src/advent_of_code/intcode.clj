@@ -21,8 +21,10 @@
     0
     (digit-at-pos s (- (count s) index))))
 
-(defn- arg-value [codes index pos instr]
-  (let [mode (nth instr pos)]
+(defn- arg-value [context pos instr]
+  (let [mode (nth instr pos)
+        codes (context :code)
+        index (context :index)]
     (cond
       (= mode 0) ;; position mode
       (nth codes (nth codes (+ pos index)))
@@ -43,77 +45,85 @@
     [op arg1-mode arg2-mode arg3-mode]))
 
 (defn process-code
-  ([codes index]
-   (let [instr (opcode-parser (nth codes index))
+  ([context]
+   (let [instr (opcode-parser (nth (context :code) (context :index)))
          opcode (first instr)]
      (cond
        (= opcode 1)
-       (do-algebraic-op + codes index instr)
+       (do-algebraic-op + context instr)
        (= opcode 2)
-       (do-algebraic-op * codes index instr)
+       (do-algebraic-op * context instr)
        (= opcode 3)
-       (do-store-input codes index instr)
+       (do-store-input context instr)
        (= opcode 4)
-       (do-print-address codes index instr)
+       (do-print-address context instr)
        (= opcode 5)
-       (do-jump-true codes index instr)
+       (do-jump-true context instr)
        (= opcode 6)
-       (do-jump-false codes index instr)
+       (do-jump-false context instr)
        (= opcode 7)
-       (do-less-than codes index instr)
+       (do-less-than context instr)
        (= opcode 8)
-       (do-equal codes index instr)
+       (do-equal context instr)
        (= opcode 99)
-       codes)))
-  ([codes] (process-code codes 0)))
+       (context :output))))
+  ([codes input] (process-code {:code codes :index 0 :input input :output []})))
 
-(defn- store-and-process [codes index value]
-  (process-code (util/replace-nth codes (nth codes (+ 3 index)) value) (+ 4 index)))
+(defn- store-and-process [context value]
+  (let [codes (context :code)
+        index (context :index)]
+    (process-code (assoc context
+                         :code (util/replace-nth codes (nth codes (+ 3 index)) value)
+                         :index (+ 4 index)))))
 
-(defn do-algebraic-op [op codes index instr]
-  (let [first-op (arg-value codes index 1 instr)
-        second-op (arg-value codes index 2 instr)
+(defn do-algebraic-op [op context instr]
+  (let [first-op (arg-value context 1 instr)
+        second-op (arg-value context 2 instr)
         result (op first-op second-op)]
-    (store-and-process codes index result)))
+    (store-and-process context result)))
 
-(defn do-store-input [codes index _instr]
-  (let [input (Integer/parseInt (str/trim (read-line)))
+(defn do-store-input [context _instr]
+  (let [codes (context :code)
+        index (context :index)
         store (nth codes (inc index))
-        stored (util/replace-nth codes store input)]
-    (process-code stored (+ 2 index))))
+        stored (util/replace-nth codes store (context :input))]
+    (process-code (assoc context :code stored :index (+ 2 index)))))
 
-(defn do-print-address [codes index instr]
-  (println (arg-value codes index 1 instr))
-  (process-code codes (+ 2 index)))
+(defn do-print-address [context instr]
+  (let [output (conj (context :output) (arg-value context 1 instr))]
+    (process-code (assoc context :index (+ 2 (context :index)) :output output))))
 
-(defn do-jump-true [codes index instr]
-  (if (> (arg-value codes index 1 instr) 0)
-    (process-code codes (arg-value codes index 2 instr))
-    (process-code codes (+ 3 index))))
+(defn do-jump-true [context instr]
+  (if (> (arg-value context 1 instr) 0)
+    (process-code (assoc context :index (arg-value context 2 instr)))
+    (process-code (assoc context :index (+ 3 (context :index))))))
 
-(defn do-jump-false [codes index instr]
-  (if (= (arg-value codes index 1 instr) 0)
-    (process-code codes (arg-value codes index 2 instr))
-    (process-code codes (+ 3 index))))
+(defn do-jump-false [context instr]
+  (if (= (arg-value context 1 instr) 0)
+    (process-code (assoc context :index (arg-value context 2 instr)))
+    (process-code (assoc context :index (+ 3 (context :index))))))
 
-(defn do-less-than [codes index instr]
-  (if (< (arg-value codes index 1 instr) (arg-value codes index 2 instr))
-    (store-and-process codes index 1)
-    (store-and-process codes index 0)))
+(defn do-less-than [context instr]
+  (if (< (arg-value context 1 instr) (arg-value context 2 instr))
+    (store-and-process context 1)
+    (store-and-process context 0)))
 
-(defn do-equal [codes index instr]
-  (if (= (arg-value codes index 1 instr) (arg-value codes index 2 instr))
-    (store-and-process codes index 1)
-    (store-and-process codes index 0)))
-
-(defn process
-  ([sv]
-   (process-code (into [] (map #(Integer/parseInt %) (str/split sv  #",")))))
-  ([sv noun verb]
-   (let [s (into [] (map #(Integer/parseInt %) (str/split sv  #",")))
-         c1 (util/replace-nth s 1 noun)
-         c2 (util/replace-nth c1 2 verb)]
-     (process-code c2))))
+(defn do-equal [context instr]
+  (if (= (arg-value context 1 instr) (arg-value context 2 instr))
+    (store-and-process context 1)
+    (store-and-process context 0)))
 
 (defn print-result [noun verb]
   (println noun verb (+ (* 100 noun) verb)))
+
+(defn process
+  ([sv input]
+   (process-code {:code (into [] (map #(Integer/parseInt %) (str/split sv #",")))
+                  :index 0
+                  :input input
+                  :output []}))
+  ([sv noun verb input]
+   (let [s (into [] (map #(Integer/parseInt %) (str/split sv #",")))
+         c1 (util/replace-nth s 1 noun)
+         c2 (util/replace-nth c1 2 verb)]
+     (process-code {:code c2 :index 0 :input input :output []}))))

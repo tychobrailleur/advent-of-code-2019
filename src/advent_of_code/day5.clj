@@ -6,7 +6,7 @@
 (def code (str/trim (slurp "resources/intcode2.txt")))
 
 (defn solve-part1 []
-  (intcode/process code)) ;; input 1
+  (last (intcode/process code 1))) ;; input 1
 
 (defn solve-part2 []
-  (intcode/process code)) ;; input 5
+  (last (intcode/process code 5))) ;; input 5

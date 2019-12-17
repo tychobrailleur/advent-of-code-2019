@@ -5,11 +5,11 @@
 (def code (str/trim (slurp "resources/intcode.txt")))
 
 (defn solve-part1 []
-  (intcode/process code 12 2))
+  (intcode/process code 12 2 nil))
 
 (defn solve-part2 []
   (for [verb (range 99)
         noun (range 99)
-        :let [output (first (intcode/process code noun verb))]
+        :let [output (first (intcode/process code noun verb nil))]
         :when (= output 19690720)]
     (intcode/print-result noun verb)))
