@@ -11,11 +11,7 @@
          value 0]
     (if (empty? s)
       value
-      (let [new-value (first (intcode/process-code
-                              {:code (vec code)
-                               :input [(first s) value]
-                               :index 0
-                               :output []}))]
+      (let [new-value (first (intcode/process code [(first s) value]))]
         (recur (rest s)
                new-value)))))
 
@@ -28,4 +24,4 @@
         (find-max-signal code max (rest permutations))))))
 
 (defn solve-part1 []
-  (println (find-max-signal (into [] (map #(Integer/parseInt %) (str/split code #","))) 0 (combo/permutations (range 5)))))
+  (find-max-signal code 0 (combo/permutations (range 5))))
