@@ -86,8 +86,11 @@
   (let [codes (context :code)
         index (context :index)
         store (nth codes (inc index))
-        stored (util/replace-nth codes store (context :input))]
-    (process-code (assoc context :code stored :index (+ 2 index)))))
+        stored (util/replace-nth codes store (first (context :input)))]
+    (process-code (assoc context
+                         :code stored
+                         :input (vec (rest (context :input)))
+                         :index (+ 2 index)))))
 
 (defn do-print-address [context instr]
   (let [output (conj (context :output) (arg-value context 1 instr))]
