@@ -66,7 +66,7 @@
        (= opcode 8)
        (do-equal context instr)
        (= opcode 99)
-       (context :output))))
+       context)))
   ([codes input] (process-code {:code codes :index 0 :input input :output []})))
 
 (defn- store-and-process [context value]
