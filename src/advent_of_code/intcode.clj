@@ -80,6 +80,7 @@
   (let [first-op (arg-value context 1 instr)
         second-op (arg-value context 2 instr)
         result (op first-op second-op)]
+    (println "index" (context :index) op first-op second-op)
     (store-and-process context result)))
 
 (defn do-store-input [context _instr]
@@ -87,6 +88,7 @@
         index (context :index)
         store (nth codes (inc index))
         stored (util/replace-nth codes store (first (context :input)))]
+    (println "index" index "store val" (first (context :input)) " at " store)
     (process-code (assoc context
                          :code stored
                          :input (vec (rest (context :input)))
@@ -97,9 +99,11 @@
     (process-code (assoc context :index (+ 2 (context :index)) :output output))))
 
 (defn do-jump-true [context instr]
-  (if (> (arg-value context 1 instr) 0)
-    (process-code (assoc context :index (arg-value context 2 instr)))
-    (process-code (assoc context :index (+ 3 (context :index))))))
+  (let [val (> (arg-value context 1 instr) 0)]
+    (println "index" (context :index) "value" (arg-value context 1 instr) "jump" val "instr" instr)
+    (if val
+      (process-code (assoc context :index (arg-value context 2 instr)))
+      (process-code (assoc context :index (+ 3 (context :index)))))))
 
 (defn do-jump-false [context instr]
   (if (= (arg-value context 1 instr) 0)
